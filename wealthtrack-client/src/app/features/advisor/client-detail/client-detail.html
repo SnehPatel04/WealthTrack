@@ -1,0 +1,172 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <a class="btn btn-secondary btn-sm" routerLink="/advisor/dashboard">← Back</a>
+      <div>
+        <h1>Client Profile</h1>
+        <p class="subtitle">Account and portfolio details</p>
+      </div>
+    </div>
+  </div>
+
+  @if (status() === 'loading') {
+    <div class="loading">Loading client data...</div>
+  }
+
+  @if (status() === 'error') {
+    <div class="error-banner">{{ errorMsg() }}</div>
+  }
+
+  @if (status() === 'success') {
+
+    <div class="summary-cards">
+      <div class="card card-green">
+        <span class="card-label">Total Portfolio Value</span>
+        <span class="card-value">{{ totalPortfolioValue() | currency }}</span>
+      </div>
+      <div class="card" [class.card-green]="totalGainLoss() >= 0" [class.card-red]="totalGainLoss() < 0">
+        <span class="card-label">Total Gain / Loss</span>
+        <span class="card-value" [class.positive]="totalGainLoss() >= 0" [class.negative]="totalGainLoss() < 0">
+          {{ totalGainLoss() | currency }}
+        </span>
+      </div>
+      <div class="card card-blue">
+        <span class="card-label">Accounts</span>
+        <span class="card-value">{{ accounts().length }}</span>
+      </div>
+      <div class="card">
+        <span class="card-label">Total Holdings</span>
+        <span class="card-value">{{ allHoldings().length }}</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Investment Accounts</h2>
+      @if (accounts().length === 0) {
+        <p class="empty-state">No accounts found.</p>
+      } @else {
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Account Number</th>
+                <th>Type</th>
+                <th>Balance</th>
+                <th>Available Cash</th>
+                <th>Status</th>
+                <th>Opened</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (account of accounts(); track account.id) {
+                <tr>
+                  <td><strong>{{ account.accountNumber }}</strong></td>
+                  <td>{{ account.accountType }}</td>
+                  <td>{{ account.balance | currency }}</td>
+                  <td>{{ account.availableCash | currency }}</td>
+                  <td>
+                    <span class="badge" [class]="account.status === 'Active' ? 'badge--active' : 'badge--inactive'">
+                      {{ account.status }}
+                    </span>
+                  </td>
+                  <td>{{ account.openedAt | date:'mediumDate' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <div class="section">
+      <h2>Holdings</h2>
+      @if (allHoldings().length === 0) {
+        <p class="empty-state">No holdings found.</p>
+      } @else {
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Security</th>
+                <th>Asset Class</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Market Value</th>
+                <th>Gain / Loss</th>
+                <th>Allocation</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (holding of allHoldings(); track holding.id) {
+                <tr>
+                  <td><strong>{{ holding.ticker }}</strong></td>
+                  <td>{{ holding.securityName }}</td>
+                  <td>{{ holding.assetClass }}</td>
+                  <td>{{ holding.quantity | number:'1.0-4' }}</td>
+                  <td>{{ holding.currentPrice | currency }}</td>
+                  <td>{{ holding.marketValue | currency }}</td>
+                  <td [class.positive]="holding.gainLossAmount >= 0" [class.negative]="holding.gainLossAmount < 0">
+                    {{ holding.gainLossAmount | currency }} ({{ holding.gainLossPercent | number:'1.1-1' }}%)
+                  </td>
+                  <td>{{ holding.allocationPercent | number:'1.1-1' }}%</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="allocation-summary">
+          @for (group of assetGroups(); track group.assetClass) {
+            <span class="alloc-chip">
+              {{ group.assetClass }}: {{ group.percent | number:'1.1-1' }}%
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="section">
+      <h2>Transaction History</h2>
+      @if (allTransactions().length === 0) {
+        <p class="empty-state">No transactions found.</p>
+      } @else {
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Security</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total Amount</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (txn of allTransactions(); track txn.id) {
+                <tr>
+                  <td>{{ txn.transactionDate | date:'mediumDate' }}</td>
+                  <td>
+                    <span class="badge" [class]="'badge--' + txn.transactionType.toLowerCase()">
+                      {{ txn.transactionType }}
+                    </span>
+                  </td>
+                  <td>{{ txn.ticker || '—' }}</td>
+                  <td>{{ txn.quantity > 0 ? (txn.quantity | number:'1.0-4') : '—' }}</td>
+                  <td>{{ txn.pricePerShare > 0 ? (txn.pricePerShare | currency) : '—' }}</td>
+                  <td>{{ txn.totalAmount | currency }}</td>
+                  <td style="color:#526079">{{ txn.notes || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+  }
+
+</div>

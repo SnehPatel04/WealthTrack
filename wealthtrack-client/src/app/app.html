@@ -1,0 +1,12 @@
+﻿@if (isLoggedIn()) {
+  <nav class="topnav">
+    <span class="topnav-brand">Wealth<span>Track</span></span>
+    <div class="topnav-right">
+      <span class="topnav-user">Welcome, <strong>{{ firstName() }}</strong></span>
+      <span class="role-badge" [class]="userRole().toLowerCase()">{{ userRole() }}</span>
+      <button class="topnav-logout" type="button" (click)="logout()">Sign Out</button>
+    </div>
+  </nav>
+}
+<router-outlet />
+

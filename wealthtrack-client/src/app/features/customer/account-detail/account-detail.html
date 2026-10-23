@@ -1,0 +1,134 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <a class="btn btn-secondary btn-sm" routerLink="/customer/accounts">← My Accounts</a>
+      <div>
+        <h1>Account Details</h1>
+        <p class="subtitle">Holdings and transaction history</p>
+      </div>
+    </div>
+  </div>
+
+  @if (status() === 'loading') {
+    <div class="loading">Loading account details...</div>
+  }
+
+  @if (status() === 'error') {
+    <div class="error-banner">{{ errorMsg() }}</div>
+  }
+
+  @if (status() === 'success' && account(); as acct) {
+
+    <div class="summary-cards">
+      <div class="card card-green">
+        <span class="card-label">Account</span>
+        <span class="card-value" style="font-size:18px">{{ acct.accountNumber }}</span>
+        <span style="font-size:13px; color:#526079">{{ acct.accountType }}</span>
+      </div>
+      <div class="card card-blue">
+        <span class="card-label">Balance</span>
+        <span class="card-value">{{ acct.balance | currency }}</span>
+      </div>
+      <div class="card">
+        <span class="card-label">Available Cash</span>
+        <span class="card-value">{{ acct.availableCash | currency }}</span>
+      </div>
+      @if (portfolio(); as port) {
+        <div class="card" [class.card-green]="port.totalGainLossAmount >= 0" [class.card-red]="port.totalGainLossAmount < 0">
+          <span class="card-label">Holdings Value</span>
+          <span class="card-value">{{ port.totalMarketValue | currency }}</span>
+          <span [class.positive]="port.totalGainLossAmount >= 0" [class.negative]="port.totalGainLossAmount < 0" style="font-size:13px;font-weight:600">
+            {{ port.totalGainLossAmount >= 0 ? '+' : '' }}{{ port.totalGainLossAmount | currency }}
+            ({{ port.totalGainLossPercent | number:'1.1-1' }}%)
+          </span>
+        </div>
+      }
+    </div>
+
+    @if (portfolio(); as port) {
+      <div class="section">
+        <h2>Holdings</h2>
+        @if (port.holdings.length === 0) {
+          <p class="empty-state">No holdings in this account.</p>
+        } @else {
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Ticker</th>
+                  <th>Security</th>
+                  <th>Asset Class</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Market Value</th>
+                  <th>Gain / Loss</th>
+                  <th>Allocation</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (holding of port.holdings; track holding.id) {
+                  <tr>
+                    <td><strong>{{ holding.ticker }}</strong></td>
+                    <td>{{ holding.securityName }}</td>
+                    <td>{{ holding.assetClass }}</td>
+                    <td>{{ holding.quantity | number:'1.0-4' }}</td>
+                    <td>{{ holding.currentPrice | currency }}</td>
+                    <td>{{ holding.marketValue | currency }}</td>
+                    <td [class.positive]="holding.gainLossAmount >= 0" [class.negative]="holding.gainLossAmount < 0">
+                      {{ holding.gainLossAmount | currency }}
+                      ({{ holding.gainLossPercent | number:'1.1-1' }}%)
+                    </td>
+                    <td>{{ holding.allocationPercent | number:'1.1-1' }}%</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="section">
+      <h2>Transaction History</h2>
+      @if (transactions().length === 0) {
+        <p class="empty-state">No transactions found for this account.</p>
+      } @else {
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Security</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total Amount</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (txn of transactions(); track txn.id) {
+                <tr>
+                  <td>{{ txn.transactionDate | date:'mediumDate' }}</td>
+                  <td>
+                    <span class="badge" [class]="'badge--' + txn.transactionType.toLowerCase()">
+                      {{ txn.transactionType }}
+                    </span>
+                  </td>
+                  <td>{{ txn.ticker || '—' }}</td>
+                  <td>{{ txn.quantity > 0 ? (txn.quantity | number:'1.0-4') : '—' }}</td>
+                  <td>{{ txn.pricePerShare > 0 ? (txn.pricePerShare | currency) : '—' }}</td>
+                  <td>{{ txn.totalAmount | currency }}</td>
+                  <td style="color:#526079">{{ txn.notes || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+  }
+
+</div>

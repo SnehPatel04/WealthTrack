@@ -1,0 +1,58 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <a class="btn btn-secondary btn-sm" routerLink="/customer/dashboard">← Back</a>
+      <div>
+        <h1>My Accounts</h1>
+        <p class="subtitle">All of your investment accounts</p>
+      </div>
+    </div>
+  </div>
+
+  @if (status() === 'loading') {
+    <div class="loading">Loading your accounts...</div>
+  }
+
+  @if (status() === 'error') {
+    <div class="error-banner">{{ errorMsg() }}</div>
+  }
+
+  @if (status() === 'success') {
+    @if (accounts().length === 0) {
+      <p class="empty-state">No accounts found.</p>
+    } @else {
+      <div class="accounts-grid">
+        @for (account of accounts(); track account.id) {
+          <div class="account-card">
+            <div class="account-card-header">
+              <span class="account-type">{{ account.accountType }}</span>
+              <span class="badge" [class]="account.status === 'Active' ? 'badge--active' : 'badge--inactive'">
+                {{ account.status }}
+              </span>
+            </div>
+            <div class="account-number">{{ account.accountNumber }}</div>
+            <div class="account-metrics">
+              <div class="metric">
+                <span class="metric-label">Balance</span>
+                <span class="metric-value">{{ account.balance | currency }}</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Available Cash</span>
+                <span class="metric-value">{{ account.availableCash | currency }}</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Opened</span>
+                <span class="metric-value">{{ account.openedAt | date:'mediumDate' }}</span>
+              </div>
+            </div>
+            <a class="btn btn-primary" [routerLink]="['/customer/accounts', account.id]">
+              View Details
+            </a>
+          </div>
+        }
+      </div>
+    }
+  }
+
+</div>

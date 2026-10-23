@@ -1,0 +1,12 @@
+bin/
+obj/
+publish/
+
+node_modules/
+dist/
+.angular/
+
+appsettings.json
+appsettings.Production.json
+.env
+.env.*

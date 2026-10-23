@@ -1,0 +1,188 @@
+﻿<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>Welcome back, {{ firstName() }}</h1>
+    <p class="subtitle">System administration</p>
+  </div>
+
+  @if (status() === 'loading') {
+    <div class="loading">Loading dashboard...</div>
+  }
+
+  @if (status() === 'error') {
+    <div class="error-banner">{{ errorMessage() }}</div>
+  }
+
+  @if (status() === 'success' && report(); as data) {
+    <div class="summary-cards">
+      <div class="card card-blue">
+        <span class="card-label">Total Users</span>
+        <span class="card-value">{{ data.totalUsers }}</span>
+      </div>
+      <div class="card card-green">
+        <span class="card-label">Active Users</span>
+        <span class="card-value positive">{{ data.activeUsers }}</span>
+      </div>
+      <div class="card card-red">
+        <span class="card-label">Inactive Users</span>
+        <span class="card-value">{{ data.inactiveUsers }}</span>
+      </div>
+      <div class="card">
+        <span class="card-label">Customers</span>
+        <span class="card-value">{{ data.totalCustomers }}</span>
+      </div>
+      <div class="card">
+        <span class="card-label">Advisors</span>
+        <span class="card-value">{{ data.totalAdvisors }}</span>
+      </div>
+      <div class="card">
+        <span class="card-label">Accounts</span>
+        <span class="card-value">{{ data.totalAccounts }}</span>
+      </div>
+    </div>
+  }
+
+  <div class="section">
+    <h2>Create New User</h2>
+
+    @if (createStatus() === 'success') {
+      <div class="success-banner">{{ createMessage() }}</div>
+    }
+
+    <form [formGroup]="createForm" (ngSubmit)="createUser()" class="inline-form">
+      <div class="form-row">
+        <div class="field">
+          <label for="firstName">First Name</label>
+          <input id="firstName" type="text" formControlName="firstName" placeholder="First name" />
+          @if (createForm.get('firstName')?.invalid && createForm.get('firstName')?.touched) {
+            <span class="field-error">First name is required.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="lastName">Last Name</label>
+          <input id="lastName" type="text" formControlName="lastName" placeholder="Last name" />
+          @if (createForm.get('lastName')?.invalid && createForm.get('lastName')?.touched) {
+            <span class="field-error">Last name is required.</span>
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="newEmail">Email</label>
+        <input id="newEmail" type="email" formControlName="email" placeholder="user@example.com" />
+        @if (createForm.get('email')?.invalid && createForm.get('email')?.touched) {
+          <span class="field-error">A valid email address is required.</span>
+        }
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label for="newPassword">Password</label>
+          <input id="newPassword" type="password" formControlName="password" placeholder="Min. 8 characters" />
+          @if (createForm.get('password')?.invalid && createForm.get('password')?.touched) {
+            <span class="field-error">Password must be at least 8 characters.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="role">Role</label>
+          <select id="role" formControlName="role">
+            <option value="">-- Select role --</option>
+            <option value="Customer">Customer</option>
+            <option value="Advisor">Advisor</option>
+          </select>
+          @if (createForm.get('role')?.invalid && createForm.get('role')?.touched) {
+            <span class="field-error">Role is required.</span>
+          }
+        </div>
+      </div>
+
+      @if (createStatus() === 'error') {
+        <div class="error-banner">{{ createMessage() }}</div>
+      }
+
+      <button class="btn btn-primary" type="submit" [disabled]="createStatus() === 'submitting'">
+        {{ createStatus() === 'submitting' ? 'Creating...' : 'Create User' }}
+      </button>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2>Assign Advisor to Client</h2>
+
+    @if (assignStatus() === 'success') {
+      <div class="success-banner">{{ assignMessage() }}</div>
+    }
+
+    <form [formGroup]="assignForm" (ngSubmit)="assignAdvisor()" class="inline-form assign-form">
+      <div class="field">
+        <label for="advisorId">Advisor</label>
+        <select id="advisorId" formControlName="advisorId">
+          <option value="">-- Select advisor --</option>
+          @for (a of advisors(); track a.id) {
+            <option [value]="a.id">{{ a.firstName }} {{ a.lastName }}</option>
+          }
+        </select>
+        @if (assignForm.get('advisorId')?.invalid && assignForm.get('advisorId')?.touched) {
+          <span class="field-error">Advisor is required.</span>
+        }
+      </div>
+      <div class="field">
+        <label for="clientId">Client</label>
+        <select id="clientId" formControlName="clientId">
+          <option value="">-- Select client --</option>
+          @for (c of customers(); track c.id) {
+            <option [value]="c.id">{{ c.firstName }} {{ c.lastName }}</option>
+          }
+        </select>
+        @if (assignForm.get('clientId')?.invalid && assignForm.get('clientId')?.touched) {
+          <span class="field-error">Client is required.</span>
+        }
+      </div>
+      @if (assignStatus() === 'error') {
+        <div class="error-banner">{{ assignMessage() }}</div>
+      }
+      <button class="btn btn-primary" type="submit" [disabled]="assignStatus() === 'submitting'">
+        {{ assignStatus() === 'submitting' ? 'Assigning...' : 'Assign Advisor' }}
+      </button>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2>User Management</h2>
+    @if (users().length === 0) {
+      <p class="empty-state">No users found.</p>
+    } @else {
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.id) {
+              <tr>
+                <td><strong>{{ user.firstName }} {{ user.lastName }}</strong></td>
+                <td style="color: #526079">{{ user.email }}</td>
+                <td><span class="badge" [class]="'badge--' + user.role.toLowerCase()">{{ user.role }}</span></td>
+                <td><span class="badge" [class]="user.isActive ? 'badge--active' : 'badge--inactive'">{{ user.isActive ? 'Active' : 'Inactive' }}</span></td>
+                <td style="color: #526079">{{ user.createdAt | date:'mediumDate' }}</td>
+                <td>
+                  <button class="btn btn-secondary btn-sm" type="button" (click)="toggleUserStatus(user)">
+                    {{ user.isActive ? 'Deactivate' : 'Activate' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+</div>

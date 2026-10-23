@@ -1,0 +1,144 @@
+﻿<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>Welcome back, {{ firstName() }}</h1>
+    <p class="subtitle">Client management overview</p>
+  </div>
+
+  @if (status() === 'loading') {
+    <div class="loading">Loading your dashboard...</div>
+  }
+
+  @if (status() === 'error') {
+    <div class="error-banner">{{ errorMessage() }}</div>
+  }
+
+  @if (status() === 'success' && report(); as data) {
+
+    <div class="summary-cards">
+      <div class="card card-green">
+        <span class="card-label">Total Managed Assets</span>
+        <span class="card-value">{{ data.totalManagedAssets | currency }}</span>
+      </div>
+      <div class="card card-blue">
+        <span class="card-label">Assigned Clients</span>
+        <span class="card-value">{{ data.totalClients }}</span>
+      </div>
+      <div class="card card-yellow">
+        <span class="card-label">Pending Requests</span>
+        <span class="card-value">{{ data.pendingRequests }}</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Assigned Clients</h2>
+      @if (data.clients.length === 0) {
+        <p class="empty-state">No clients assigned yet.</p>
+      } @else {
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Client Name</th>
+                <th>Portfolio Value</th>
+                <th>Accounts</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (client of data.clients; track client.clientId) {
+                <tr>
+                  <td><strong>{{ client.clientName }}</strong></td>
+                  <td>{{ client.totalPortfolioValue | currency }}</td>
+                  <td>{{ client.accountCount }}</td>
+                  <td>
+                    <a class="btn btn-secondary btn-sm" [routerLink]="['/advisor/clients', client.clientId]">
+                      View Profile
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <div class="section">
+      <h2>Request Inbox</h2>
+
+      @if (respondStatus() === 'success') {
+        <div class="success-banner">{{ respondMessage() }}</div>
+      }
+
+      @if (selectedRequest(); as req) {
+        <div class="respond-panel">
+          <div class="respond-panel-header">
+            <div>
+              <strong>{{ req.subject }}</strong>
+              <span class="badge" [class]="'badge--' + req.status.toLowerCase()">{{ req.status }}</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" type="button" (click)="clearSelected()">Close</button>
+          </div>
+          <p class="respond-message">{{ req.message }}</p>
+          <form [formGroup]="respondForm" (ngSubmit)="submitResponse()" class="inline-form">
+            <div class="field">
+              <label for="status">Update Status</label>
+              <select id="status" formControlName="status">
+                <option value="InProgress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="advisorResponse">Your Response</label>
+              <textarea id="advisorResponse" formControlName="advisorResponse" rows="3" placeholder="Write your response..."></textarea>
+              @if (respondForm.get('advisorResponse')?.invalid && respondForm.get('advisorResponse')?.touched) {
+                <span class="field-error">Response is required.</span>
+              }
+            </div>
+            @if (respondStatus() === 'error') {
+              <div class="error-banner">{{ respondMessage() }}</div>
+            }
+            <button class="btn btn-primary" type="submit" [disabled]="respondStatus() === 'submitting'">
+              {{ respondStatus() === 'submitting' ? 'Saving...' : 'Save Response' }}
+            </button>
+          </form>
+        </div>
+      }
+
+      @if (requests().length === 0) {
+        <p class="empty-state">No open requests.</p>
+      } @else {
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Subject</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (req of requests(); track req.id) {
+                <tr>
+                  <td><strong>{{ req.clientName }}</strong></td>
+                  <td>{{ req.subject }}</td>
+                  <td>{{ req.requestType }}</td>
+                  <td><span class="badge" [class]="'badge--' + req.status.toLowerCase()">{{ req.status }}</span></td>
+                  <td>{{ req.submittedAt | date:'mediumDate' }}</td>
+                  <td><button class="btn btn-secondary btn-sm" type="button" (click)="selectRequest(req)">Respond</button></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+  }
+
+</div>

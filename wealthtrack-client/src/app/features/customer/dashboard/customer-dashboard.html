@@ -1,0 +1,180 @@
+﻿<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>Welcome back, {{ firstName() }}</h1>
+    <p class="subtitle">Your investment portfolio overview</p>
+  </div>
+
+  @if (reportStatus() === 'loading') {
+    <div class="loading">Loading your dashboard...</div>
+  }
+
+  @if (reportStatus() === 'error') {
+    <div class="error-banner">{{ errorMessage() }}</div>
+  }
+
+  @if (reportStatus() === 'success' && report(); as data) {
+
+    <div class="summary-cards">
+      <div class="card card-green">
+        <span class="card-label">Total Portfolio Value</span>
+        <span class="card-value">{{ data.totalPortfolioValue | currency }}</span>
+      </div>
+      <div class="card" [class.card-green]="data.totalGainLoss >= 0" [class.card-red]="data.totalGainLoss < 0">
+        <span class="card-label">Total Gain / Loss</span>
+        <span class="card-value" [class.positive]="data.totalGainLoss >= 0" [class.negative]="data.totalGainLoss < 0">
+          {{ data.totalGainLoss | currency }}
+        </span>
+        <span [class.positive]="data.totalGainLoss >= 0" [class.negative]="data.totalGainLoss < 0" style="font-size:13px;font-weight:600">
+          {{ data.totalGainLoss >= 0 ? '+' : '' }}{{ data.totalGainLossPercent | number:'1.2-2' }}%
+        </span>
+      </div>
+      <div class="card card-blue">
+        <span class="card-label">Accounts</span>
+        <span class="card-value">{{ data.totalAccounts }}</span>
+      </div>
+      <div class="card card-yellow">
+        <span class="card-label">Open Requests</span>
+        <span class="card-value">{{ pendingCount() }}</span>
+      </div>
+    </div>
+
+    <div class="chart-section">
+
+      <div class="chart-panel">
+        <h2>Portfolio Allocation</h2>
+        @if (assetGroups().length > 0) {
+          <div class="chart-canvas-wrap">
+            <canvas baseChart
+              [data]="chartData()"
+              [options]="chartOptions"
+              type="doughnut">
+            </canvas>
+          </div>
+          <div class="chart-legend">
+            @for (group of assetGroups(); track group.assetClass; let i = $index) {
+              <div class="chart-legend-item">
+                <span class="legend-dot" [style.background]="getColor(i)"></span>
+                <span class="legend-label">{{ group.assetClass }}</span>
+                <span class="legend-value">{{ group.marketValue | currency:'USD':'symbol':'1.0-0' }}</span>
+                <span class="legend-pct">{{ group.percent | number:'1.1-1' }}%</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="empty-state">No holdings data available.</p>
+        }
+      </div>
+
+      <div class="chart-panel">
+        <div class="section-header">
+          <h2>Your Accounts</h2>
+          <a class="btn btn-secondary btn-sm" routerLink="/customer/accounts">View All</a>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Type</th>
+                <th>Balance</th>
+                <th>Cash</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (account of data.accounts; track account.accountId) {
+                <tr>
+                  <td>{{ account.accountNumber }}</td>
+                  <td>{{ account.accountType }}</td>
+                  <td>{{ account.balance | currency }}</td>
+                  <td>{{ account.availableCash | currency }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <h2>My Advisor Requests</h2>
+        <button class="btn btn-primary" type="button" (click)="toggleForm()">
+          {{ showForm() ? 'Cancel' : '+ New Request' }}
+        </button>
+      </div>
+
+      @if (showForm()) {
+        <form [formGroup]="requestForm" (ngSubmit)="submitRequest()" class="inline-form">
+          <div class="field">
+            <label for="requestType">Request Type</label>
+            <select id="requestType" formControlName="requestType">
+              <option value="">-- Select type --</option>
+              <option value="PortfolioReview">Portfolio Review</option>
+              <option value="Consultation">Financial Consultation</option>
+              <option value="AccountAssistance">Account Assistance</option>
+              <option value="Other">Other</option>
+            </select>
+            @if (requestForm.get('requestType')?.invalid && requestForm.get('requestType')?.touched) {
+              <span class="field-error">Request type is required.</span>
+            }
+          </div>
+          <div class="field">
+            <label for="subject">Subject</label>
+            <input id="subject" type="text" formControlName="subject" placeholder="Brief subject line" />
+            @if (requestForm.get('subject')?.invalid && requestForm.get('subject')?.touched) {
+              <span class="field-error">Subject is required.</span>
+            }
+          </div>
+          <div class="field">
+            <label for="message">Message</label>
+            <textarea id="message" formControlName="message" rows="3" placeholder="Describe your request to your advisor..."></textarea>
+            @if (requestForm.get('message')?.invalid && requestForm.get('message')?.touched) {
+              <span class="field-error">Message is required.</span>
+            }
+          </div>
+          @if (submitStatus() === 'error') {
+            <div class="error-banner">{{ submitMessage() }}</div>
+          }
+          <button class="btn btn-primary" type="submit" [disabled]="submitStatus() === 'submitting'">
+            {{ submitStatus() === 'submitting' ? 'Submitting...' : 'Submit Request' }}
+          </button>
+        </form>
+      }
+
+      @if (submitStatus() === 'success') {
+        <div class="success-banner">{{ submitMessage() }}</div>
+      }
+
+      @if (requests().length === 0) {
+        <p class="empty-state">No requests submitted yet. Use the button above to contact your advisor.</p>
+      } @else {
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Submitted</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (req of requests(); track req.id) {
+                <tr>
+                  <td>{{ req.subject }}</td>
+                  <td>{{ req.requestType }}</td>
+                  <td><span class="badge" [class]="'badge--' + req.status.toLowerCase()">{{ req.status }}</span></td>
+                  <td>{{ req.submittedAt | date:'mediumDate' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+  }
+
+</div>
